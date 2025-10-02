@@ -191,13 +191,22 @@ export function TaskManagement({setempChange}: {setempChange: (val: boolean) => 
 
 
       // Assigned to filter
-   if (filters.assignedTo && filters.assignedTo !== "all") {
-  const assignedId =
-    typeof task.assignedTo === "object"
-      ? task.assignedTo?._id
-      : task.assignedTo
+  // Assigned to filter
+if (filters.assignedTo && filters.assignedTo !== "all") {
+  if (filters.assignedTo === "unassigned") {
+    // show only tasks with no assigned user
+    if (task.assignedTo !== null && task.assignedTo !== undefined && task.assignedTo !== "") {
+      return false
+    }
+  } else {
+    // normal assigned user filter
+    const assignedId =
+      typeof task.assignedTo === "object"
+        ? task.assignedTo?._id
+        : task.assignedTo
 
-  if (assignedId !== filters.assignedTo) return false
+    if (assignedId !== filters.assignedTo) return false
+  }
 }
 
 
