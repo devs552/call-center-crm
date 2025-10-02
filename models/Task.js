@@ -5,6 +5,10 @@ const TaskSchema = new mongoose.Schema({
   Pack: { type: String },
   region: { type: String },
   landline: { type: String },
+  mobile: { type: String }, // Added mobile number
+  accountNo: { type: String }, // Added account number
+  address: { type: String }, // Added address
+  team: { type: String }, // Added team
   name: { type: String },
   closed: { type: String }, // closed date
   EID: { type: String },

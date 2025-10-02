@@ -37,7 +37,7 @@ export default async function handler(req, res) {
           let assignedTo = null;
 
           if (row["assigned to"] && mongoose.Types.ObjectId.isValid(row["assigned to"])) {
-            assignedTo = row["assigned to"]; // ✅ valid ObjectId
+            assignedTo = row["assigned to"];
           }
 
           return {
@@ -45,6 +45,10 @@ export default async function handler(req, res) {
             Pack: row.Pack || "",
             region: row.region || "",
             landline: row.Landline || "",
+            mobile: row.MOBILE || "",           // <-- Added mobile
+            accountNo: row.ACCOUNTNO || "",     // <-- Added accountNo
+            address: row.ADDRESS || "",         // <-- Added address
+            team: row.TEAM || "",               // <-- Added team
             name: row.Name || "",
             closed: row.Closed || "",
             EID: row.EID || "",
@@ -55,7 +59,7 @@ export default async function handler(req, res) {
             dncr: row.dncr || "",
             Remarks: row.REMARKS || "",
             comments: row.comments || "",
-            assignedTo, // ✅ only ObjectId or null
+            assignedTo,
             status: row.STATUS || "",
             taskCreationTime: row["task creation time"]
               ? new Date(row["task creation time"])

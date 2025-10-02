@@ -85,6 +85,10 @@ interface Task {
   } | string
   status: string
   taskCreationTime: string
+  address?: string
+  mobile?: string
+  accountNo?: string
+  team?: string
 }
 
 interface UserType {
@@ -129,6 +133,9 @@ export function TaskManagement({setempChange}: {setempChange: (val: boolean) => 
     pack: "",
     area: ""
   })
+
+  // Add state for N
+  const [selectN, setSelectN] = useState<number>(0)
 
   // Mock toast function for demo
   const toast = ({ title, description, variant }: { title: string; description: string; variant?: string }) => {
@@ -261,7 +268,7 @@ export function TaskManagement({setempChange}: {setempChange: (val: boolean) => 
 
     const formData = new FormData()
     formData.append("file", file)
-
+ 
     setIsLoading(true)
     try {
       const res = await fetch("/api/tasks/upload", { method: "POST", body: formData })
@@ -554,11 +561,12 @@ export function TaskManagement({setempChange}: {setempChange: (val: boolean) => 
     </SelectTrigger>
     <SelectContent>
       <SelectItem value="all">All Employees</SelectItem>
+      <SelectItem value="unassigned">Unassigned</SelectItem>
       {users
         .filter((user) => user._id) // ✅ prevent empty/undefined IDs
         .map((user) => (
           <SelectItem key={user._id} value={user._id}>
-            {user.fullName || "Unnamed"}
+            {user.fullName || user.name || "Unnamed"}
           </SelectItem>
         ))}
     </SelectContent>
@@ -631,8 +639,49 @@ export function TaskManagement({setempChange}: {setempChange: (val: boolean) => 
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* Render Select N and Select button only if bulkUser is selected */}
+              {bulkUser && (
+                <div className="flex items-center gap-2 mb-2">
+                  <Input
+                    type="number"
+                    min={1}
+                    max={filteredTasks.length}
+                    value={selectN || ""}
+                    onChange={e => setSelectN(Number(e.target.value))}
+                    placeholder="Select N"
+                    className="w-24"
+                  />
+                  <Button
+                    variant="outline"
+                    onClick={() => setSelectedTasks(filteredTasks.slice(0, selectN).map(task => task._id))}
+                    disabled={!selectN || selectN < 1 || selectN > filteredTasks.length}
+                  >
+                    Select {selectN}
+                  </Button>
+                  {/* Prominent Cancel Assigning button, only if N is selected */}
+                  {selectN > 0 && (
+                    <Button
+                      variant="destructive"
+                      onClick={() => {
+                        setSelectedTasks([])
+                        setBulkUser("")
+                        setSelectN(0)
+                      }}
+                      className="font-bold"
+                    >
+                      Cancel Assigning
+                    </Button>
+                  )}
+                </div>
+              )}
+
               <Button 
-                onClick={handleBulkAssign} 
+                onClick={async () => {
+                  await handleBulkAssign()
+                  setSelectedTasks([])
+                  setSelectN(0)
+                }} 
                 disabled={!bulkUser || selectedTasks.length === 0}
                 className="bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700"
               >
@@ -677,6 +726,10 @@ export function TaskManagement({setempChange}: {setempChange: (val: boolean) => 
                     <TableHead>Comments</TableHead>
                     <TableHead>Remarks</TableHead>
                     <TableHead>DNCR</TableHead>
+                    <TableHead>Mobile</TableHead>
+                    <TableHead>Account No</TableHead>
+                    <TableHead>Address</TableHead>
+                    <TableHead>Team</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -711,14 +764,14 @@ export function TaskManagement({setempChange}: {setempChange: (val: boolean) => 
                       </TableCell>
                       <TableCell>
                         <div className="space-y-1 truncate">
-                          {task.Pack && (
+                          {true && (
                             <div className="text-sm font-medium text-blue-600">
-                              {task.Pack}
+                              {task.Pack || "N/A"}
                             </div>
                           )}
-                          {task.region && (
+                          {true && (
                             <div className="text-xs text-gray-500">
-                              {task.region}
+                              {task.region || "N/A"}
                             </div>
                           )}
                         </div>
@@ -742,10 +795,10 @@ export function TaskManagement({setempChange}: {setempChange: (val: boolean) => 
                       </TableCell>
                       <TableCell>
                         <div className="space-y-1 text-sm truncate">
-                          {task.contact && (
+                          {true && (
                             <div className="flex items-center gap-1">
                               <Smartphone className="w-3 h-3 text-gray-400" />
-                              {task.contact}
+                              {task.contact || "N/A"}
                             </div>
                           )}
                           {task.landline && (
@@ -789,6 +842,26 @@ export function TaskManagement({setempChange}: {setempChange: (val: boolean) => 
                       <TableCell>
                         <div className={`text-sm text-gray-600 truncate ${task.dncr === "blocked" ? "text-red-600 font-semibold" : ""}`}>
                           {task.dncr ? (task.dncr.charAt(0).toUpperCase() + task.dncr.slice(1)) : "N/A"}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm text-gray-600 truncate">
+                          {task.mobile || "N/A"}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm text-gray-600 truncate">
+                          {task.accountNo || "N/A"}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm text-gray-600 truncate">
+                          {task.address || "N/A"}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm text-gray-600 truncate">
+                          {task.team || "N/A"}
                         </div>
                       </TableCell>
                       <TableCell className="text-right">
@@ -868,7 +941,7 @@ export function TaskManagement({setempChange}: {setempChange: (val: boolean) => 
                 {renderTaskField("DNCR", selectedTask.dncr, <FileText className="w-4 h-4" />)}
                 {renderTaskField("Closed", selectedTask.closed, <XCircle className="w-4 h-4" />)}
                 {renderTaskField("Remarks", selectedTask.Remarks, <MessageSquare className="w-4 h-4" />)}
-                {renderTaskField("Comments", selectedTask.comments, <MessageSquare className="w-4 h-4" />)}
+                {renderTaskField("Comments", selectedTask.comments , <MessageSquare className="w-4 h-4" />)}
                 {renderTaskField("Status", selectedTask.status, <AlertCircle className="w-4 h-4" />)}
                 {renderTaskField("Assigned To", 
                   typeof selectedTask.assignedTo === 'object' && selectedTask.assignedTo 
@@ -1050,6 +1123,38 @@ export function TaskManagement({setempChange}: {setempChange: (val: boolean) => 
                     onChange={(e) => setEditForm({ ...editForm, comments: e.target.value })}
                     placeholder="Enter comments"
                     rows={3}
+                  />
+                </div>
+                <div>
+                  <Label>Mobile</Label>
+                  <Input
+                    value={editForm.mobile || ""}
+                    onChange={(e) => setEditForm({ ...editForm, mobile: e.target.value })}
+                    placeholder="Enter mobile"
+                  />
+                </div>
+                <div>
+                  <Label>Account No</Label>
+                  <Input
+                    value={editForm.accountNo || ""}
+                    onChange={(e) => setEditForm({ ...editForm, accountNo: e.target.value })}
+                    placeholder="Enter account number"
+                  />
+                </div>
+                <div>
+                  <Label>Address</Label>
+                  <Input
+                    value={editForm.address || ""}
+                    onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
+                    placeholder="Enter address"
+                  />
+                </div>
+                <div>
+                  <Label>Team</Label>
+                  <Input
+                    value={editForm.team || ""}
+                    onChange={(e) => setEditForm({ ...editForm, team: e.target.value })}
+                    placeholder="Enter team"
                   />
                 </div>
               </div>
